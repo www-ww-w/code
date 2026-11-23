@@ -1,15 +1,16 @@
-import json
-import sys
-import os
 import datetime
-from urllib.parse import urlparse, parse_qs
+import json
+import os
+import sys
+from urllib.parse import parse_qs
 
-def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_workers=20, delay=0):
-    lines = raw_request.strip().split('\n')
+
+def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_workers=20, request_delay=0.2):
+    lines = raw_request.strip().split("\n")
     if not lines or lines[0].strip() == "":
         return "Error : No request content !!!"
 
-    first_line = lines[0].strip().split(' ')
+    first_line = lines[0].strip().split(" ")
     if len(first_line) < 2:
         return "Error：Wrong HTTP(s) format"
     method = first_line[0]
@@ -20,45 +21,45 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
     body_index = -1
 
     for i in range(1, len(lines)):
-        line = lines[i].strip('\r\n')
+        line = lines[i].strip("\r\n")
         if line == "":
             body_index = i + 1
             break
-        
+
         if ":" in line:
             key, value = line.split(":", 1)
             key = key.strip()
             value = value.strip()
-            
-            if key.lower() == 'cookie':
-                cookie_pairs = value.split(';')
+
+            if key.lower() == "cookie":
+                cookie_pairs = value.split(";")
                 for pair in cookie_pairs:
-                    if '=' in pair:
-                        c_key, c_val = pair.split('=', 1)
+                    if "=" in pair:
+                        c_key, c_val = pair.split("=", 1)
                         cookies[c_key.strip()] = c_val.strip()
             else:
                 headers[key] = value
 
-    host = headers.get('Host', 'localhost')
+    host = headers.get("Host", "localhost")
     protocol = "https://" if is_https else "http://"
     full_url = f"{protocol}{host}{path}"
 
     body_data = ""
     if body_index != -1 and body_index < len(lines):
         body_data = "\n".join(lines[body_index:])
-    
+
     output = "#!/usr/bin/python3\n\n"
     if multi_thread:
         output += "from concurrent.futures import ThreadPoolExecutor, as_completed\n"
-        if delay > 0:
-            output += "import time\n"
-        output += "import requests\n\n"
+        output += "import time\n"
+        output += "import requests\n"
+        output += "import sys\n\n"
     else:
         output += "import requests\n\n"
 
     output += f'url = "{full_url}"\n\n'
     output += "headers = " + json.dumps(headers, indent=4, ensure_ascii=False) + "\n\n"
-    
+
     if cookies:
         output += "cookies = " + json.dumps(cookies, indent=4, ensure_ascii=False) + "\n\n"
     else:
@@ -67,13 +68,13 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
     payload_var = None
     req_call = ""
     if body_data:
-        if 'application/json' in headers.get('Content-Type', '').lower():
+        if "application/json" in headers.get("Content-Type", "").lower():
             try:
                 json_obj = json.loads(body_data)
                 output += "json_data = " + json.dumps(json_obj, indent=4, ensure_ascii=False) + "\n\n"
                 payload_var = "json_data"
                 req_call = f"requests.{method.lower()}(url, headers=headers, cookies=cookies, json=json_data)"
-            except:
+            except Exception:
                 output += f'raw_data = """{body_data}"""\n\n'
                 payload_var = "raw_data"
                 req_call = f"requests.{method.lower()}(url, headers=headers, cookies=cookies, data=raw_data)"
@@ -86,8 +87,8 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
                     payload_var = "data"
                     req_call = f"requests.{method.lower()}(url, headers=headers, cookies=cookies, data=data)"
                 else:
-                    raise Exception
-            except:
+                    raise ValueError("Empty form body")
+            except Exception:
                 output += f'raw_data = """{body_data}"""\n\n'
                 payload_var = "raw_data"
                 req_call = f"requests.{method.lower()}(url, headers=headers, cookies=cookies, data=raw_data)"
@@ -95,11 +96,11 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
         req_call = f"requests.{method.lower()}(url, headers=headers, cookies=cookies)"
 
     if multi_thread:
-        output += "def send_request(identify):\n"
-        if delay > 0:
-            output += f"    time.sleep({delay})\n"
+        output += "def send_request(identify, delay):\n"
+        output += "    if delay > 0:\n"
+        output += "        time.sleep(delay)\n"
         if payload_var == "data":
-            output += "    payload = {\"mfa-code\": identify}\n"
+            output += '    payload = {"mfa-code": identify}\n'
             output += f"    response = requests.{method.lower()}(url, headers=headers, cookies=cookies, data=payload)\n"
         elif payload_var == "json_data":
             output += f"    response = requests.{method.lower()}(url, headers=headers, cookies=cookies, json=json_data)\n"
@@ -111,11 +112,24 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
 
         output += 'if __name__ == "__main__":\n'
         output += "    futures = []\n"
-        output += "    checked = 0\n\n"
+        output += "    checked = 0\n"
         output += f"    max_workers = {max_workers}\n"
+        output += f"    request_delay = {request_delay}\n\n"
+
+        if payload_var == "data":
+            output += f"    response = requests.{method.lower()}(url, headers=headers, cookies=cookies, data=data)\n"
+        elif payload_var == "json_data":
+            output += f"    response = requests.{method.lower()}(url, headers=headers, cookies=cookies, json=json_data)\n"
+        elif payload_var == "raw_data":
+            output += f"    response = requests.{method.lower()}(url, headers=headers, cookies=cookies, data=raw_data)\n"
+        else:
+            output += f"    response = requests.{method.lower()}(url, headers=headers, cookies=cookies)\n"
+
+        output += '    print(f"response length : {len(response.text)}")\n'
+        output += "    sys.exit(0)\n\n"
         output += "    with ThreadPoolExecutor(max_workers=max_workers) as executor:\n"
         output += "        for i in range(10000):\n"
-        output += '            futures.append(executor.submit(send_request, f"{i:04d}"))\n\n'
+        output += '            futures.append(executor.submit(send_request, f"{i:04d}", delay=request_delay))\n\n'
         output += "        for future in as_completed(futures):\n"
         output += "            identify, response = future.result()\n"
         output += "            checked += 1\n"
@@ -125,8 +139,8 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
         output += "                for pending in futures:\n"
         output += "                    pending.cancel()\n"
         output += "                break\n\n"
-        output += "#print(response.status_code)\n"
-        output += "#print(response.text)\n"
+        output += "    #print(response.status_code)\n"
+        output += "    #print(response.text)\n"
     else:
         output += 'if __name__ == "__main__":\n'
         output += f"    response = {req_call}\n"
@@ -134,6 +148,7 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
         output += "    print(response.text)\n"
 
     return output
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
