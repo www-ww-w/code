@@ -28,12 +28,12 @@ headers1 = {
 }
 
 data1 = {
-    "username": [
+    "username": 
         "wiener"
-    ],
-    "password": [
+    ,
+    "password": 
         "aaa"
-    ]
+    
 }
 
 url2 = "https://0ac30061030273268198482e006500e6.web-security-academy.net/my-account/change-password"
@@ -59,18 +59,18 @@ headers2 = {
 
 
 data2 = {
-    "username": [
+    "username": 
         "carlos"
-    ],
-    "current-password": [
+    ,
+    "current-password": 
         "aaa"
-    ],
-    "new-password-1": [
+    ,
+    "new-password-1": 
         "aaa"
-    ],
-    "new-password-2": [
+    ,
+    "new-password-2": 
         "aaa"
-    ]
+    
 }
 
 
