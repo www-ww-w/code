@@ -52,15 +52,15 @@ cookies2 = {
 }
 
 data2 = {
-    "csrf": [
+    "csrf": 
         "xnfC29lO8cy6XFqIzak7P9J3QtEeVnrj"
-    ],
-    "username": [
+    ,
+    "username": 
         "carlos"
-    ],
-    "password": [
+    ,
+    "password": 
         "montoya"
-    ]
+    
 }
 
 
@@ -114,12 +114,12 @@ cookies4 = {
 }
 
 data4 = {
-    "csrf": [
+    "csrf": 
         "xnfC29lO8cy6XFqIzak7P9J3QtEeVnrj"
-    ],
-    "mfa-code": [
+    ,
+    "mfa-code": 
         "0000"
-    ]
+    
 }
 
 def send_request(identify, delay=0):
