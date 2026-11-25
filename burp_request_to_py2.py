@@ -81,7 +81,7 @@ def convert_burp_to_python(raw_request, is_https=True, multi_thread=True, max_wo
         else:
             try:
                 parsed_body = parse_qs(body_data)
-                clean_body = {k: v for k, v in parsed_body.items()}
+                clean_body = {k: v[0] if len(v) == 1 else v for k, v in parsed_body.items()}
                 if clean_body:
                     output += "data = " + json.dumps(clean_body, indent=4, ensure_ascii=False) + "\n\n"
                     payload_var = "data"
